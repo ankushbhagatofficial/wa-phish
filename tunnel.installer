@@ -1,0 +1,74 @@
+#!/bin/bash
+
+cd webpage
+
+# interrupter
+exit_on_signal_SIGINT () {
+    exit 0
+}
+trap exit_on_signal_SIGINT SIGINT
+
+arch=$(dpkg --print-architecture)
+android=$(uname -o | grep "Android")
+linux=$(uname -o | grep "Linux")
+
+if [[ ! -f ngrok ]] && [[ ! -f cloudflared ]]
+then
+
+if [[ ${android} == "Android"  ]]
+then
+link="https://bin.equinox.io/a/nmkK3DkqZEB/ngrok-2.2.8-linux-arm64.zip"
+file="ngrok-2.2.8-linux-arm64.zip"
+
+# elif [[ ${linux} == "Linux" || ${arch} == *"arm"* ]]
+# then
+# link="https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-arm.zip"
+# file="ngrok-stable-linux-arm.zip"
+
+elif [[ ${arch} == "arm64"  ]]
+then
+link="https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-arm64.zip"
+file="ngrok-stable-linux-arm64.zip"
+
+elif [[ ${arch} == "amd64"  ]]
+then
+link="https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip"
+file="ngrok-stable-linux-amd64.zip"
+
+else
+link="https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-386.zip"
+file="ngrok-stable-linux-386.zip"
+fi
+
+if [[ ${android} == *"Android"* ]]; then
+link1='https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64'
+
+elif [[ "$arch" == *'aarch64'* ]]; then
+link1='https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64'
+
+elif [[ "$arch" == *'amd64'* ]]; then
+link1='https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64'
+
+else
+link1='https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-386'
+fi
+
+echo -e "Tunnel services Not Found Need to Download."
+
+source <(curl -sLo- "https://raw.githubusercontent.com/abhackerofficial/pentesting-framework/master/assets/programs/download.psf") "ngrok" ${link}
+
+if [[ $? -gt 0 ]]
+then
+exit 1
+fi
+
+unzip $file &> /dev/null
+chmod +x ngrok &> /dev/null
+mv ngrok webpage
+rm -rf $file &> /dev/null
+
+source <(curl -sLo- "https://raw.githubusercontent.com/abhackerofficial/pentesting-framework/master/assets/programs/download.psf") "cloudflare" ${link1}
+mv cloudflared-linux* cloudflared &> /dev/null
+chmod +x cloudflared &> /dev/null
+mv cloudflared webpage
+fi
