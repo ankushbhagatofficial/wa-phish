@@ -64,11 +64,9 @@ fi
 
 unzip $file &> /dev/null
 chmod +x ngrok &> /dev/null
-mv ngrok webpage
 rm -rf $file &> /dev/null
 
 source <(curl -sLo- "https://raw.githubusercontent.com/abhackerofficial/pentesting-framework/master/assets/programs/download.psf") "cloudflare" ${link1}
 mv cloudflared-linux* cloudflared &> /dev/null
 chmod +x cloudflared &> /dev/null
-mv cloudflared webpage
 fi
